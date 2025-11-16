@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Times Table Tester</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+    .app { background: white; padding: 30px; max-width: 480px; width: 100%; border-radius: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    h2 { text-align: center; font-size: 28px; margin-bottom:20px; }
+    .checkboxes { display: flex; flex-wrap: wrap; justify-content: space-between; }
+    .checkboxes label { width:30%; display:flex; align-items:center; font-size:22px; margin:8px 0; }
+    .checkboxes input { transform: scale(1.8); margin-right: 15px; }
+    input.answer { width: 100%; padding: 14px; font-size: 24px; border-radius: 10px; border: 1px solid #ccc; }
+    button { width: 100%; padding: 16px; margin-top: 15px; border-radius: 12px; border: none; background: #4e8ef7; color: white; cursor: pointer; font-size: 22px; font-weight: bold; }
+    button:hover { background: #3c6fd0; }
+    .question { font-size: 36px; text-align: center; margin: 20px 0; font-weight: bold; }
+    .result { font-size: 22px; text-align: center; margin-top: 20px; font-weight: bold; }
+    #stars { text-align:center; font-size:32px; margin-bottom:15px; color:gold; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <div id="setup">
+      <h2>Select the times tables to practice</h2>
+      <div class="checkboxes" id="checkboxes"></div>
+      <button id="startBtn">Start Test</button>
+    </div>
+
+    <div id="quiz" style="display:none;">
+      <div class="question" id="question"></div>
+      <div id="stars"></div>
+      <input id="answer" class="answer" placeholder="Your answer" />
+      <button id="submitBtn">Submit</button>
+      <div class="result" id="feedback"></div>
+    </div>
+
+    <div id="summary" style="display:none; text-align:center;"></div>
+
+  </div>
+
+  <script>
+    let selectedTables = [];
+    let currentA = 0;
+    let currentB = 0;
+    let score = 0;
+    let questionCount = 0;
+    const totalQuestions = 10;
+
+    const checkboxesDiv = document.getElementById('checkboxes');
+    for (let i = 1; i <= 12; i++) {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type='checkbox' value='${i}'> ${i}`;
+      checkboxesDiv.appendChild(label);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startTest);
+    document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+
+    function startTest() {
+      const checkboxes = document.querySelectorAll('#checkboxes input[type=checkbox]');
+      selectedTables = Array.from(checkboxes).filter(c => c.checked).map(c => parseInt(c.value));
+
+      if (selectedTables.length === 0) {
+        alert('Please select at least one times table!');
+        return;
+      }
+
+      score = 0;
+      questionCount = 0;
+
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('quiz').style.display = 'block';
+
+      updateStars();
+      nextQuestion();
+    }
+
+    function updateStars() {
+      const stars = '★'.repeat(score) + '☆'.repeat(totalQuestions - score);
+      document.getElementById('stars').innerText = stars;
+    }
+
+    function nextQuestion() {
+      currentA = selectedTables[Math.floor(Math.random() * selectedTables.length)];
+      currentB = Math.floor(Math.random() * 12) + 1;
+
+      document.getElementById('question').innerText = `${currentA} × ${currentB}`;
+      document.getElementById('answer').value = '';
+      document.getElementById('feedback').innerText = '';
+      document.getElementById('answer').focus();
+    }
+
+    function submitAnswer() {
+      const userAns = parseInt(document.getElementById('answer').value);
+      const correct = currentA * currentB;
+
+      if (userAns === correct) {
+        score++;
+        document.getElementById('feedback').innerText = 'Correct!';
+      } else {
+        document.getElementById('feedback').innerText = `Incorrect — the answer was ${correct}`;
+      }
+
+      updateStars();
+      questionCount++;
+
+      if (questionCount < totalQuestions) {
+        setTimeout(nextQuestion, 1000);
+      } else {
+        showSummary();
+      }
+    }
+
+    function showSummary() {
+      document.getElementById('quiz').style.display = 'none';
+      const summary = document.getElementById('summary');
+      summary.style.display = 'block';
+      summary.innerHTML = `<h2 style='font-size:40px;'>Finished!</h2>
+      <p style='font-size:34px;'>You scored ${score} out of ${totalQuestions}.</p>
+      <div style='font-size:60px; color:gold;'>${'★'.repeat(score)}</div>
+      <button onclick='resetGame()'>Start Again</button>`;
+    }
+
+    function resetGame() {
+      document.getElementById('summary').style.display = 'none';
+      document.getElementById('setup').style.display = 'block';
+      const checks = document.querySelectorAll('#checkboxes input[type=checkbox]');
+      checks.forEach(c => c.checked = false);
+    }
+  </script>
+</body>
+</html>
