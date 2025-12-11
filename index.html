@@ -51,6 +51,35 @@
 
     // build checkbox grid (4 rows of 3)
     const checkboxesDiv = document.getElementById('checkboxes');
+    // Add ALL option
+    // Add ALL option centered on its own line
+    const allWrapper = document.createElement('div');
+    allWrapper.style.width = '100%';
+    allWrapper.style.textAlign = 'center';
+    allWrapper.style.margin = '10px 0';
+
+    const allLabel = document.createElement('label');
+    allLabel.style.fontSize = '26px';
+    allLabel.style.fontWeight = 'bold';
+    allLabel.innerHTML = "<input type='checkbox' id='checkAll' value='all'> All";
+
+    allWrapper.appendChild(allLabel);
+    checkboxesDiv.appendChild(allWrapper);
+
+    // Handle ALL toggle
+    allLabel.querySelector('input').addEventListener('change', function() {
+      const all = this.checked;
+      const others = document.querySelectorAll('#checkboxes input[type=checkbox]:not(#checkAll)');
+      others.forEach(cb => cb.checked = all);
+    });
+
+    // Handle ALL toggle
+    allLabel.querySelector('input').addEventListener('change', function() {
+      const all = this.checked;
+      const others = document.querySelectorAll('#checkboxes input[type=checkbox]:not(#checkAll)');
+      others.forEach(cb => cb.checked = all);
+    });
+    // Generate individual table checkboxes
     for (let i = 1; i <= 12; i++) {
       const label = document.createElement('label');
       label.innerHTML = `<input type='checkbox' value='${i}'> ${i}`;
@@ -65,7 +94,9 @@
       window.usedQuestions = [];
 
       const checkboxes = document.querySelectorAll('#checkboxes input[type=checkbox]');
-      selectedTables = Array.from(checkboxes).filter(c => c.checked).map(c => parseInt(c.value, 10));
+      selectedTables = Array.from(checkboxes)
+        .filter(c => c.checked && c.value !== 'all')
+        .map(c => parseInt(c.value, 10));
 
       if (selectedTables.length === 0) {
         alert('Please select at least one times table!');
