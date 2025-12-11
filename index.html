@@ -17,6 +17,7 @@
     .question { font-size: 36px; text-align: center; margin: 20px 0; font-weight: bold; }
     .result { font-size: 22px; text-align: center; margin-top: 20px; font-weight: bold; }
     #stars { text-align:center; font-size:32px; margin-bottom:15px; color:gold; }
+    @media (max-width:420px){ .checkboxes label{ width:48%; } }
   </style>
 </head>
 <body>
@@ -48,6 +49,7 @@
     let questionCount = 0;
     const totalQuestions = 10;
 
+    // build checkbox grid (4 rows of 3)
     const checkboxesDiv = document.getElementById('checkboxes');
     for (let i = 1; i <= 12; i++) {
       const label = document.createElement('label');
@@ -59,8 +61,11 @@
     document.getElementById('submitBtn').addEventListener('click', submitAnswer);
 
     function startTest() {
+      // reset used questions so we don't repeat within the set
+      window.usedQuestions = [];
+
       const checkboxes = document.querySelectorAll('#checkboxes input[type=checkbox]');
-      selectedTables = Array.from(checkboxes).filter(c => c.checked).map(c => parseInt(c.value));
+      selectedTables = Array.from(checkboxes).filter(c => c.checked).map(c => parseInt(c.value, 10));
 
       if (selectedTables.length === 0) {
         alert('Please select at least one times table!');
@@ -83,9 +88,25 @@
     }
 
     function nextQuestion() {
-      currentA = selectedTables[Math.floor(Math.random() * selectedTables.length)];
-      currentB = Math.floor(Math.random() * 12) + 1;
+      if (!window.usedQuestions) window.usedQuestions = [];
 
+      let a, b, key;
+      // pick a unique question (stop trying if we already used totalQuestions unique ones)
+      let attempts = 0;
+      do {
+        a = selectedTables[Math.floor(Math.random() * selectedTables.length)];
+        b = Math.floor(Math.random() * 12) + 1;
+        key = `${a}x${b}`;
+        attempts++;
+        // safety: if we've tried too long, break to avoid infinite loop
+        if (attempts > 1000) break;
+      } while (usedQuestions.includes(key) && usedQuestions.length < totalQuestions);
+
+      usedQuestions.push(key);
+      currentA = a;
+      currentB = b;
+
+      // show question (clean, no stray tokens)
       document.getElementById('question').innerText = `${currentA} × ${currentB}`;
       document.getElementById('answer').value = '';
       document.getElementById('feedback').innerText = '';
@@ -93,10 +114,11 @@
     }
 
     function submitAnswer() {
-      const userAns = parseInt(document.getElementById('answer').value);
+      const raw = document.getElementById('answer').value.trim();
+      const userAns = raw === '' ? NaN : parseInt(raw, 10);
       const correct = currentA * currentB;
 
-      if (userAns === correct) {
+      if (!isNaN(userAns) && userAns === correct) {
         score++;
         document.getElementById('feedback').innerText = 'Correct!';
       } else {
@@ -107,9 +129,10 @@
       questionCount++;
 
       if (questionCount < totalQuestions) {
-        setTimeout(nextQuestion, 1000);
+        // short delay so child can see feedback
+        setTimeout(nextQuestion, 900);
       } else {
-        showSummary();
+        setTimeout(showSummary, 700);
       }
     }
 
@@ -117,17 +140,28 @@
       document.getElementById('quiz').style.display = 'none';
       const summary = document.getElementById('summary');
       summary.style.display = 'block';
-      summary.innerHTML = `<h2 style='font-size:40px;'>Finished!</h2>
-      <p style='font-size:34px;'>You scored ${score} out of ${totalQuestions}.</p>
-      <div style='font-size:60px; color:gold;'>${'★'.repeat(score)}</div>
-      <button onclick='resetGame()'>Start Again</button>`;
+      summary.innerHTML = `<h2 style='font-size:40px;margin-bottom:6px;'>Finished!</h2>
+      <p style='font-size:34px;margin:6px 0;'>You scored ${score} out of ${totalQuestions}.</p>
+      <div style='font-size:36px; color:gold; margin:8px 0;'>${'★'.repeat(score)}${'☆'.repeat(Math.max(0,totalQuestions-score))}</div>
+      <button id='restartBtn'>Start Again</button>`;
+
+      document.getElementById('restartBtn').addEventListener('click', resetGame);
     }
 
     function resetGame() {
+      // go back to setup and clear selections
       document.getElementById('summary').style.display = 'none';
       document.getElementById('setup').style.display = 'block';
       const checks = document.querySelectorAll('#checkboxes input[type=checkbox]');
       checks.forEach(c => c.checked = false);
+      // reset internal trackers
+      window.usedQuestions = [];
+      score = 0;
+      questionCount = 0;
+      updateStars();
+      document.getElementById('question').innerText = '';
+      document.getElementById('feedback').innerText = '';
+      document.getElementById('stars').innerText = '';
     }
   </script>
 </body>
